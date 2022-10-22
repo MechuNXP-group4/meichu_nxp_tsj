@@ -371,7 +371,7 @@ void BOARD_ConfigMPU(void)
     SCB_EnableDCache();
     SCB_EnableICache();
 }
-
+/*
 void BOARD_SD_Pin_Config(uint32_t speed, uint32_t strength)
 {
     IOMUXC_SetPinConfig(IOMUXC_GPIO_SD_B0_00_USDHC1_CMD,
@@ -404,6 +404,7 @@ void BOARD_SD_Pin_Config(uint32_t speed, uint32_t strength)
                             IOMUXC_SW_PAD_CTL_PAD_HYS_MASK | IOMUXC_SW_PAD_CTL_PAD_PUS(1) |
                             IOMUXC_SW_PAD_CTL_PAD_DSE(strength));
 }
+*/
 
 void BOARD_MMC_Pin_Config(uint32_t speed, uint32_t strength)
 {
