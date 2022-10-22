@@ -36,6 +36,46 @@
 			<locationURI>SDK_2_x_EVK_MIMXRT1060/boards/evkmimxrt1060/eiq_examples/glow_lenet_mnist_camera/doc/readme.txt</locationURI>
 		</link>
 		<link>
+			<name>lwip/BUILDING</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/BUILDING</locationURI>
+		</link>
+		<link>
+			<name>lwip/CHANGELOG</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/CHANGELOG</locationURI>
+		</link>
+		<link>
+			<name>lwip/COPYING</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/COPYING</locationURI>
+		</link>
+		<link>
+			<name>lwip/ChangeLogKSDK.txt</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/ChangeLogKSDK.txt</locationURI>
+		</link>
+		<link>
+			<name>lwip/FEATURES</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/FEATURES</locationURI>
+		</link>
+		<link>
+			<name>lwip/FILES</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/FILES</locationURI>
+		</link>
+		<link>
+			<name>lwip/README</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/README</locationURI>
+		</link>
+		<link>
+			<name>lwip/UPGRADING</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/UPGRADING</locationURI>
+		</link>
+		<link>
 			<name>eiq/glow/LICENSE.txt</name>
 			<type>1</type>
 			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/eiq/glow/LICENSE.txt</locationURI>
@@ -46,6 +86,61 @@
 			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/eiq/glow/readme.txt</locationURI>
 		</link>
 		<link>
+			<name>lwip/doc/FILES</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/doc/FILES</locationURI>
+		</link>
+		<link>
+			<name>lwip/doc/NO_SYS_SampleCode.c</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/doc/NO_SYS_SampleCode.c</locationURI>
+		</link>
+		<link>
+			<name>lwip/doc/ZeroCopyRx.c</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/doc/ZeroCopyRx.c</locationURI>
+		</link>
+		<link>
+			<name>lwip/doc/contrib.txt</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/doc/contrib.txt</locationURI>
+		</link>
+		<link>
+			<name>lwip/doc/mdns.txt</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/doc/mdns.txt</locationURI>
+		</link>
+		<link>
+			<name>lwip/doc/mqtt_client.txt</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/doc/mqtt_client.txt</locationURI>
+		</link>
+		<link>
+			<name>lwip/doc/ppp.txt</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/doc/ppp.txt</locationURI>
+		</link>
+		<link>
+			<name>lwip/doc/savannah.txt</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/doc/savannah.txt</locationURI>
+		</link>
+		<link>
+			<name>lwip/src/FILES</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/src/FILES</locationURI>
+		</link>
+		<link>
+			<name>sdmmc/host/ChangeLogKSDK.txt</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/sdmmc/host/usdhc/ChangeLogKSDK.txt</locationURI>
+		</link>
+		<link>
+			<name>sdmmc/sdio/ChangeLogKSDK.txt</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/sdmmc/sdio/ChangeLogKSDK.txt</locationURI>
+		</link>
+		<link>
 			<name>freertos/freertos_kernel/include/stdint.readme</name>
 			<type>1</type>
 			<locationURI>SDK_2_x_EVK_MIMXRT1060/rtos/freertos/freertos_kernel/include/stdint.readme</locationURI>
@@ -54,6 +149,51 @@
 			<name>freertos/freertos_kernel/portable/readme.txt</name>
 			<type>1</type>
 			<locationURI>SDK_2_x_EVK_MIMXRT1060/rtos/freertos/freertos_kernel/portable/readme.txt</locationURI>
+		</link>
+		<link>
+			<name>lwip/doc/doxygen/generate.bat</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/doc/doxygen/generate.bat</locationURI>
+		</link>
+		<link>
+			<name>lwip/doc/doxygen/generate.sh</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/doc/doxygen/generate.sh</locationURI>
+		</link>
+		<link>
+			<name>lwip/doc/doxygen/lwip.Doxyfile</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/doc/doxygen/lwip.Doxyfile</locationURI>
+		</link>
+		<link>
+			<name>lwip/doc/doxygen/lwip.Doxyfile.cmake.in</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/doc/doxygen/lwip.Doxyfile.cmake.in</locationURI>
+		</link>
+		<link>
+			<name>lwip/doc/doxygen/main_page.h</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/doc/doxygen/main_page.h</locationURI>
+		</link>
+		<link>
+			<name>lwip/src/netif/FILES</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/src/netif/FILES</locationURI>
+		</link>
+		<link>
+			<name>lwip/doc/doxygen/output/index.html</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/doc/doxygen/output/index.html</locationURI>
+		</link>
+		<link>
+			<name>lwip/src/netif/ppp/PPPD_FOLLOWUP</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/src/netif/ppp/PPPD_FOLLOWUP</locationURI>
+		</link>
+		<link>
+			<name>lwip/src/netif/ppp/polarssl/README</name>
+			<type>1</type>
+			<locationURI>SDK_2_x_EVK_MIMXRT1060/middleware/lwip/src/netif/ppp/polarssl/README</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

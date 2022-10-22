@@ -40,7 +40,6 @@ void VIDEO_DelayMs(uint32_t ms)
     tick = (0U == tick) ? 1U : tick;
 
     vTaskDelay(tick);
-
 #else
     while (0U != (ms--))
     {
