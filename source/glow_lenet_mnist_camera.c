@@ -49,6 +49,7 @@ const int wifi_STACK_SIZE = 800;
 
 portSTACK_TYPE *wifi_stack = NULL;
 TaskHandle_t wifi_task_handler;
+TaskHandle_t main_task_handler;
 
 struct wlan_network sta_network;
 
@@ -326,15 +327,12 @@ static void APP_InitCamera(void)
   memset(s_frameBuffer, 0, sizeof(s_frameBuffer));
 
   BOARD_InitCameraResource();
-
   CAMERA_RECEIVER_Init(&cameraReceiver, &cameraConfig, APP_CSIFullBufferReady, NULL);
-
   if (kStatus_Success != CAMERA_DEVICE_Init(&cameraDevice, &cameraConfig))
   {
     PRINTF("Camera device initialization failed\r\n");
     while (1) {}
   }
-
   CAMERA_DEVICE_Start(&cameraDevice);
 
   /* Submit the empty frame buffers to buffer queue. */
@@ -533,6 +531,10 @@ void main_task(void * arg)
   APP_InitPxp();
   /* Start CSI transfer */
   APP_CsiRgb565Start();
+
+  vTaskSuspend(NULL);
+  /* wifi task done */
+  vTaskSuspend(wifi_task_handler);
 
   Image prev_scale = {
 	.width = EXTRACT_WIDTH,
@@ -844,6 +846,8 @@ void wifi_task(void *param)
         __BKPT(0);
     }
 
+    vTaskResume(main_task_handler);
+
     for (;;)
         ;
 }
@@ -869,17 +873,17 @@ int main(void)
 
   PRINTF("Meichu Team 4 Professor Smart\r\n");
 
-  BaseType_t result = xTaskCreate(wifi_task, "main", wifi_STACK_SIZE, wifi_stack, wifi_PRIO, &wifi_task_handler);
+  BaseType_t result = xTaskCreate(wifi_task, "main", wifi_STACK_SIZE, wifi_stack, 3, &wifi_task_handler);
   //assert(pdPASS == result);
 
   /* Create the main Task (inference) */
 
-  /*if (xTaskCreate(main_task, "main_task", 2048, NULL, configMAX_PRIORITIES - 1, NULL) != pdPASS)
+  if (xTaskCreate(main_task, "main_task", 2048, NULL, configMAX_PRIORITIES - 1, &main_task_handler) != pdPASS)
   {
 	  PRINTF("[!] MAIN Task creation failed!\r\n");
 	  while (1)
 		  ;
-  }*/
+  }
 
   /* Run RTOS */
   vTaskStartScheduler();
