@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+#include "client.h"
 #include "wlan_bt_fw.h"
 #include "wlan.h"
 #include "wifi.h"
@@ -31,11 +32,11 @@
 
 // ----------------------------- WIFI DEFIN -----------------------------
 #ifndef AP_SSID
-#define AP_SSID "Hackathon Middle"
+#define AP_SSID "fridge_test"
 #endif
 
 #ifndef AP_PASSPHRASE
-#define AP_PASSPHRASE "hackathon2022"
+#define AP_PASSPHRASE "fridge12345678"
 #endif
 
 #ifndef PING_ADDR
@@ -832,6 +833,10 @@ void wifi_task(void *param)
     if (WM_SUCCESS == ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
     {
         PRINTF("Connection Successful\r\n");
+        add_item(0);
+        PRINTF("ADD sent\r\n");
+        remove_item(0);
+        PRINTF("REMOVE sent\r\n");
     }
     else
     {
@@ -864,16 +869,17 @@ int main(void)
 
   PRINTF("Meichu Team 4 Professor Smart\r\n");
 
-  //BaseType_t result = xTaskCreate(wifi_task, "main", wifi_STACK_SIZE, wifi_stack, wifi_PRIO, &wifi_task_handler);
+  BaseType_t result = xTaskCreate(wifi_task, "main", wifi_STACK_SIZE, wifi_stack, wifi_PRIO, &wifi_task_handler);
   //assert(pdPASS == result);
 
   /* Create the main Task (inference) */
-  if (xTaskCreate(main_task, "main_task", 2048, NULL, configMAX_PRIORITIES - 1, NULL) != pdPASS)
+
+  /*if (xTaskCreate(main_task, "main_task", 2048, NULL, configMAX_PRIORITIES - 1, NULL) != pdPASS)
   {
 	  PRINTF("[!] MAIN Task creation failed!\r\n");
 	  while (1)
 		  ;
-  }
+  }*/
 
   /* Run RTOS */
   vTaskStartScheduler();
