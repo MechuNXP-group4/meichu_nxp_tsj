@@ -24,42 +24,42 @@
 
 // ----------------------------- Bundle API -----------------------------
 // Bundle includes.
-#include "lenet_mnist.h"
+#include "mobilenet_quant.h"
 #include "glow_bundle_utils.h"
 
 // Statically allocate memory for constant weights (model weights) and initialize.
-GLOW_MEM_ALIGN(LENET_MNIST_MEM_ALIGN)
-uint8_t constantWeight[LENET_MNIST_CONSTANT_MEM_SIZE] = {
-#include "lenet_mnist.weights.txt"
+GLOW_MEM_ALIGN(MOBILENET_QUANT_MEM_ALIGN)
+uint8_t constantWeight[MOBILENET_QUANT_CONSTANT_MEM_SIZE] = {
+#include "mobilenet_quant.weights.txt"
 };
 
 // Statically allocate memory for mutable weights (model input/output data).
-GLOW_MEM_ALIGN(LENET_MNIST_MEM_ALIGN)
-uint8_t mutableWeight[LENET_MNIST_MUTABLE_MEM_SIZE];
+GLOW_MEM_ALIGN(MOBILENET_QUANT_MEM_ALIGN)
+uint8_t mutableWeight[MOBILENET_QUANT_MUTABLE_MEM_SIZE];
 
 // Statically allocate memory for activations (model intermediate results).
-GLOW_MEM_ALIGN(LENET_MNIST_MEM_ALIGN)
-uint8_t activations[LENET_MNIST_ACTIVATIONS_MEM_SIZE];
+GLOW_MEM_ALIGN(MOBILENET_QUANT_MEM_ALIGN)
+uint8_t activations[MOBILENET_QUANT_ACTIVATIONS_MEM_SIZE];
 
 // Bundle input data absolute address.
-uint8_t *inputAddr = GLOW_GET_ADDR(mutableWeight, LENET_MNIST_data);
+uint8_t *inputAddr = GLOW_GET_ADDR(mutableWeight, MOBILENET_QUANT_serving_default_mobilenetv2_0_50_160_input_0);
 
 // Bundle output data absolute address.
-uint8_t *outputAddr = GLOW_GET_ADDR(mutableWeight, LENET_MNIST_softmax);
+uint8_t *outputAddr = GLOW_GET_ADDR(mutableWeight, MOBILENET_QUANT_StatefulPartitionedCall_0);
 
 // ---------------------------- Application -----------------------------
 // Model input size
 #define IMAGE_CHANNELS              3
-#define MODEL_INPUT_HEIGHT          28
-#define MODEL_INPUT_WIDTH           28
-#define MODEL_INPUT_SIZE            MODEL_INPUT_HEIGHT * MODEL_INPUT_WIDTH * IMAGE_CHANNELS * sizeof(float)
+#define MODEL_INPUT_HEIGHT          160
+#define MODEL_INPUT_WIDTH           160
+#define MODEL_INPUT_SIZE            MODEL_INPUT_HEIGHT * MODEL_INPUT_WIDTH * IMAGE_CHANNELS
 
-#define MODEL_COLOR_ORDER           BGR_COLOR_ORDER
-#define MODEL_IMAGE_LAYOUT          NCHW_LAYOUT
+#define MODEL_COLOR_ORDER           RGB_COLOR_ORDER
+#define MODEL_IMAGE_LAYOUT          NHWC_LAYOUT
 #define MODEL_IMAGE_SCALE_MODE      SCALE_0TO1
 
 // Number of output classes for the model.
-#define MODEL_NUM_OUTPUT_CLASSES  10
+#define MODEL_NUM_OUTPUT_CLASSES  4
 
 // Allocate buffer for input data. This buffer contains the input image
 // pre-processed and serialized as text to include here.
@@ -71,30 +71,24 @@ uint8_t imageData[MODEL_INPUT_SIZE] = {
 
 // Class labels.
 const char* LABELS[MODEL_NUM_OUTPUT_CLASSES] = {
-		"0",
-		"1",
-		"2",
-		"3",
-		"4",
-		"5",
-		"6",
-		"7",
-		"8",
-		"9"
+		"apple",
+		"cabbage",
+		"cucumber",
+		"potato",
 };
 
 //Define size of pixels to extract from camera image. This will be scaled down later to fit model input
-#define EXTRACT_HEIGHT  140
-#define EXTRACT_WIDTH   140
+#define EXTRACT_HEIGHT  160
+#define EXTRACT_WIDTH   160
 
 //Calculate start of selection rectangle
 int Rec_x = (480-EXTRACT_WIDTH)/2;
 int Rec_y = (272-EXTRACT_HEIGHT)/2;
 
-#define DISPLAY_THRESHOLD 40
+//#define DISPLAY_THRESHOLD 40
 
-uint8_t color_threshold = 140;
-bool display_threshold_reached=false;
+//uint8_t color_threshold = 140;
+//bool display_threshold_reached=false;
 
 /*******************************************************************************
  * CSI and LCD Definitions
@@ -201,7 +195,6 @@ uint32_t max_idx, display_idx, last_max_idx;
 float last_max_val=0;
 
 static uint8_t s_data[EXTRACT_WIDTH * EXTRACT_HEIGHT * 3];
-static uint8_t s_monochrome[MODEL_INPUT_WIDTH * MODEL_INPUT_HEIGHT];
 
 /*******************************************************************************
  * Code
@@ -400,14 +393,8 @@ static void APP_CsiRgb565Refresh()
   }
 
   /* Print result to screen */
-  if(display_threshold_reached)
-  {
-	  GUI_printf(Rec_x+EXTRACT_WIDTH-8, Rec_y+EXTRACT_HEIGHT+20, LABELS[display_idx]);
-  }
-  else
-  {
-	  GUI_printf(Rec_x+EXTRACT_WIDTH-8, Rec_y+EXTRACT_HEIGHT+20, "Unknown");
-  }
+  GUI_printf(Rec_x+EXTRACT_WIDTH-8, Rec_y+EXTRACT_HEIGHT+20, LABELS[display_idx]);
+  
   s_newFrameShown = false;
   g_dc.ops->setFrameBuffer(&g_dc, 0, (void *)s_lcdBuf[curLcdBufferIdx]);
 }
@@ -440,52 +427,25 @@ static void APP_CSIFullBufferReady(camera_receiver_handle_t *handle,
  * is not required.
  * param staticImageLen size of static image.
  */
-void run_inference(const uint8_t *image_data, const char* labels[], uint8_t scale_mode)
+void run_inference(const uint8_t *image_data, const char* labels[])
 {
-	  // Timer variables.
-	  uint32_t start_time = 0U;
-	  uint32_t stop_time = 0U;
-	  uint32_t duration_ms = 0U;
-
-	  // Produce input data for bundle.
-	  // Copy the pre-processed image data into the bundle input buffer.s)
-	  float *bundleInput =(float *)inputAddr;
-
-
+	  int8_t *bundleInput =(int8_t *)inputAddr;
 	  //Do scaling on image.
-      for (int idx = 0; idx < MODEL_INPUT_HEIGHT * MODEL_INPUT_WIDTH; idx++)
-      {
-        if(scale_mode==SCALE_NEG1TO1)
-        {
-          bundleInput[idx]=(((((float)image_data[idx])/255.0)*2)-1.0);
-        }
-        else if(scale_mode==SCALE_0TO1)
-        {
-          bundleInput[idx]=(((float)image_data[idx])/255.0);
-        }
-        else if(scale_mode==SCALE_NEG128TO127)
-        {
-          bundleInput[idx]=(((float)image_data[idx])-128);
-        }
-        else if(scale_mode==SCALE_0TO255)
-        {
-           //Do nothing as data already scaled from 0 to 255
-           bundleInput[idx]=(float)image_data[idx];
-        }
-     }
+	  for (int idx = 0; idx < MODEL_INPUT_SIZE; idx++)
+	  {
+	    int32_t tmp = image_data[idx];
+	    tmp -= 128;
+		bundleInput[idx]=((int8_t)(tmp));
+	  }
 
-
-	  // Perform inference and compute inference time.
-	  //start_time = get_time_in_us();
-	  lenet_mnist(constantWeight, mutableWeight, activations);
-	  //stop_time = get_time_in_us();
-	  //duration_ms = (stop_time - start_time) / 1000;
+	  mobilenet_quant(constantWeight, mutableWeight, activations);
 
 	  // Get classification top1 result and confidence.
-	  float *out_data = (float*)(outputAddr);
-	  float max_val = 0.0;
+	  int8_t *out_data = (int8_t*)(outputAddr);
+	  int8_t max_val = 0.0;
 
 	  for(int i = 0; i < MODEL_NUM_OUTPUT_CLASSES; i++) {
+		 //PRINTF("Confidence = 0.%03u\r\n",(int)(out_data[i]*1000));
 	    if (out_data[i] > max_val) {
 	      max_val = out_data[i];
 	      max_idx = i;
@@ -496,100 +456,16 @@ void run_inference(const uint8_t *image_data, const char* labels[], uint8_t scal
 	  if(max_idx==last_max_idx)
 	  {
 		  display_idx=max_idx;
-
-		  //If get two low confidence results in a row, display "Unknown" on screen instead of result
-		  if((max_val*100)>DISPLAY_THRESHOLD && (last_max_val*100)>DISPLAY_THRESHOLD)
-		  {
-			  display_threshold_reached=true;
-		  }
-		  else
-		  {
-			  display_threshold_reached=false;
-		  }
 	  }
 	  last_max_idx=max_idx;
-	  last_max_val=max_val;
 
 	  // Print classification results if Confidence > Threshold.
 	  PRINTF("Top1 class = %lu (%s)\r\n", max_idx, LABELS[max_idx]);
-	  PRINTF("Confidence = 0.%03u\r\n",(int)(max_val*1000));
+	  PRINTF("Confidence = %lu \r\n",(int)(max_val));
 	  //PRINTF("Inference time = %lu (ms)\r\n", duration_ms);
 }
 
 
-void convert_to_monochrome(uint8_t *color, uint8_t *monochrome)
-{
-	/* Convert color values to a single monochrome value, using luminosity values for better accuracy */
-   //.2125 * Red
-   //.7154 * Green
-   //.0721 * Blue
-   //Algorithm is slightly different based on color order and layout order
-    for (int idx = 0; idx < MODEL_INPUT_HEIGHT * MODEL_INPUT_WIDTH; idx++)
-    {
-
-    	if(MODEL_COLOR_ORDER==RGB_COLOR_ORDER)
-    	{
-    		if(MODEL_IMAGE_LAYOUT==NCHW_LAYOUT)
-    		{
-    		  //RGB NCHW
-    		  monochrome[idx]=(int)(.2125*color[idx]+.7154*color[idx+MODEL_INPUT_WIDTH*MODEL_INPUT_HEIGHT]+.0721*color[idx+MODEL_INPUT_WIDTH*MODEL_INPUT_HEIGHT*2]);
-    		}
-    		else
-    		{
-    		  //RGB NHWC
-      		  monochrome[idx]=(int)(.2125*color[idx*3]+.7154*color[idx*3+1]+.0721*color[idx*3+2]);
-    		}
-    	}
-    	else
-    	{
-    		if(MODEL_IMAGE_LAYOUT==NCHW_LAYOUT)
-    		{
-    		  //BGR NCHW
-    		  monochrome[idx]=(int)(.0721*color[idx]+.7154*color[idx+MODEL_INPUT_WIDTH*MODEL_INPUT_HEIGHT]+.2125*color[idx+MODEL_INPUT_WIDTH*MODEL_INPUT_HEIGHT*2]);
-    		}
-    		else
-    		{
-    		  //BGR NCHW
-      		  monochrome[idx]=(int)(.0721*color[idx*3]+.7154*color[idx*3+1]+.2125*color[idx*3+2]);
-    		}
-    	}
-    }
-
-    /* LeNet MNIST model expects white numbers on black background. Because camera is looking at black numbers on white background, flip the contrast */
-    for (int idx = 0; idx < MODEL_INPUT_HEIGHT * MODEL_INPUT_WIDTH; idx++)
-    {
-    	monochrome[idx]=((monochrome[idx]-255)*-1);
-
-    	//To also help with accuracy, make pixels max/min values
-    	if(monochrome[idx]<color_threshold)
-    	{
-    		monochrome[idx]=0;
-    	}
-    	else
-    	{
-    		monochrome[idx]=255;
-    	}
-
-    	//Makes number thicker by adding extra width if value to the left was zero for better accuracy
-    	if((monochrome[idx-1]==0) && (monochrome[idx]==255))
-    	{
-    		monochrome[idx-1]=255;
-    	}
-    }
-}
-
-/* Calibrate for white level if needed */
-void calibrate(uint8_t *monochrome)
-{
-    uint32_t average=0;
-    for (int idx = 0; idx < MODEL_INPUT_HEIGHT * MODEL_INPUT_WIDTH; idx++)
-    {
-    	average+=monochrome[idx];
-    }
-    average=average/(MODEL_INPUT_WIDTH*MODEL_INPUT_HEIGHT);
-    color_threshold=average+20;
-    PRINTF("New color threshold is %d\r\n",color_threshold);
-}
 
 /* Meichu Team 4 */
 
@@ -652,10 +528,9 @@ void main_task(void * arg)
 	   after_scale = ImScale(&prev_scale, after_scale, dx, dy);
 
 	   /* Convert the color image to monochrome */
-	   convert_to_monochrome(after_scale->imageData, s_monochrome);
 
 	   /* Run inference on the resized and decolorized data */
-	   run_inference(s_monochrome, LABELS, MODEL_IMAGE_SCALE_MODE);
+	   run_inference(after_scale->imageData, LABELS);
 	   g_isCamDataExtracted = false;
 	   PRINTF("item_mode: %d\r\n", item_mode);
 	}
