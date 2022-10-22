@@ -864,17 +864,17 @@ int main(void)
 
   PRINTF("Meichu Team 4 Professor Smart\r\n");
 
-  BaseType_t result = xTaskCreate(wifi_task, "main", wifi_STACK_SIZE, wifi_stack, wifi_PRIO, &wifi_task_handler);
-  assert(pdPASS == result);
+  //BaseType_t result = xTaskCreate(wifi_task, "main", wifi_STACK_SIZE, wifi_stack, wifi_PRIO, &wifi_task_handler);
+  //assert(pdPASS == result);
 
-  /* Create the main Task (inference)
+  /* Create the main Task (inference) */
   if (xTaskCreate(main_task, "main_task", 2048, NULL, configMAX_PRIORITIES - 1, NULL) != pdPASS)
   {
 	  PRINTF("[!] MAIN Task creation failed!\r\n");
 	  while (1)
 		  ;
   }
-  */
+
   /* Run RTOS */
   vTaskStartScheduler();
 
