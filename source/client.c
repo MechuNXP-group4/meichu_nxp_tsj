@@ -54,7 +54,7 @@ void send_request(const char path[]) {
     }
 
     // send request
-    len = sprintf((char*) buf, "GET %s HTTP/1.1\r\n\r\n", path);
+    len = sprintf((char*) buf, "GET %s HTTP/1.1\r\nHost: %s:%d\r\n\r\n", path, SERVER_IP, SERVER_PORT);
     while ((ret = write(server_fd, buf, len)) <= 0) {
         if (ret != 0) {
             PRINTF("write() failed\n");

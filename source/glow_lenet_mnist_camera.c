@@ -451,7 +451,9 @@ static void APP_CSIFullBufferReady(camera_receiver_handle_t *handle,
 }
 
 
+volatile int inference_result = -1;
 
+volatile int count = 0;
 /*!
  * @brief  Run inference. It processed static image if static image is not NULL
  * otherwise camera input is processed.
@@ -476,7 +478,6 @@ void run_inference(const uint8_t *image_data, const char* labels[])
 	  // Get classification top1 result and confidence.
 	  int8_t *out_data = (int8_t*)(outputAddr);
 	  int8_t max_val = 0.0;
-
 	  for(int i = 0; i < MODEL_NUM_OUTPUT_CLASSES; i++) {
 		 //PRINTF("Confidence = 0.%03u\r\n",(int)(out_data[i]*1000));
 	    if (out_data[i] > max_val) {
@@ -489,6 +490,7 @@ void run_inference(const uint8_t *image_data, const char* labels[])
 	  if(max_idx==last_max_idx)
 	  {
 		  display_idx=max_idx;
+		  inference_result = max_idx;
 	  }
 	  last_max_idx=max_idx;
 
@@ -496,6 +498,13 @@ void run_inference(const uint8_t *image_data, const char* labels[])
 	  PRINTF("Top1 class = %lu (%s)\r\n", max_idx, LABELS[max_idx]);
 	  PRINTF("Confidence = %lu \r\n",(int)(max_val));
 	  //PRINTF("Inference time = %lu (ms)\r\n", duration_ms);
+	  PRINTF("count from inference func: %d\r\n", count);
+	  if(count == 1)
+	  {
+		  add_item(max_idx);
+		  count = 0;
+		  PRINTF("request sent to server\r\n");
+	  }
 }
 
 
@@ -504,30 +513,35 @@ void run_inference(const uint8_t *image_data, const char* labels[])
 
 /* inference and send packet vars */
 TimerHandle_t button_timer;
-volatile int count = 0;
-
-void sendPacket(TimerHandle_t xTimer)
+void sendPacket()
 {
+	xTimerStop(button_timer, 0);
 	if (count == 1)
 	{
-		// do
-		PRINTF("1\r\n");
+		PRINTF("send add %d\r\n", inference_result);
+		add_item(inference_result);
 	}
 	else
 	{
-		PRINTF("2\r\n");
+		PRINTF("send remove %d\r\n", inference_result);
+		remove_item(inference_result);
 	}
 	count = 0;
+	xTimerReset(button_timer, 0);
+}
+
+void timer_callback(TimerHandle_t xTimer)
+{
+	// triggered every 500 ms
+	PRINTF("timer callback\r\n");
+	if (count == 0) return;
+	else sendPacket();
 }
 
 void BOARD_USER_BUTTON_IRQ_HANDLER(void)
 {
-	PRINTF("here\r\n");
-	//BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	//if (count == 0) {
-	//	xTimerStartFromISR(button_timer, &xHigherPriorityTaskWoken);
-	}
-	//count++;
+	count = 1;
+	PRINTF("button irq count: %d\r\n", count);
 	GPIO_PortClearInterruptFlags(BOARD_USER_BUTTON_GPIO, 1U << BOARD_USER_BUTTON_GPIO_PIN);
 	SDK_ISR_EXIT_BARRIER;
 }
@@ -545,8 +559,6 @@ void main_task(void * arg)
   GPIO_PinInit(BOARD_USER_BUTTON_GPIO, BOARD_USER_BUTTON_GPIO_PIN, &sw_config);
   GPIO_PortEnableInterrupts(BOARD_USER_BUTTON_GPIO, 1U << BOARD_USER_BUTTON_GPIO_PIN);
 
-  //button_timer = xTimerCreate("button_timer", pdMS_TO_TICKS(500), pdFALSE, NULL, sendPacket);
-
   APP_InitCamera();
   APP_InitDisplay();
   APP_InitPxp();
@@ -556,6 +568,9 @@ void main_task(void * arg)
   vTaskSuspend(NULL);
   /* wifi task done */
   vTaskSuspend(wifi_task_handler);
+
+  //button_timer = xTimerCreate("button_timer", pdMS_TO_TICKS(500), pdTRUE, NULL, timer_callback);
+  //xTimerStart(button_timer, 0);
 
   Image prev_scale = {
 	.width = EXTRACT_WIDTH,
@@ -855,10 +870,6 @@ void wifi_task(void *param)
     if (WM_SUCCESS == ulTaskNotifyTake(pdTRUE, portMAX_DELAY))
     {
         PRINTF("Connection Successful\r\n");
-        add_item(0);
-        PRINTF("ADD sent\r\n");
-        remove_item(0);
-        PRINTF("REMOVE sent\r\n");
     }
     else
     {
@@ -893,12 +904,12 @@ int main(void)
 
   PRINTF("Meichu Team 4 Professor Smart\r\n");
 
-  BaseType_t result = xTaskCreate(wifi_task, "main", wifi_STACK_SIZE, wifi_stack, 3, &wifi_task_handler);
+  BaseType_t result = xTaskCreate(wifi_task, "main", wifi_STACK_SIZE, wifi_stack, 2, &wifi_task_handler);
   //assert(pdPASS == result);
 
   /* Create the main Task (inference) */
 
-  if (xTaskCreate(main_task, "main_task", 2048, NULL, configMAX_PRIORITIES - 1, &main_task_handler) != pdPASS)
+  if (xTaskCreate(main_task, "main_task", 2048, NULL, 3, &main_task_handler) != pdPASS)
   {
 	  PRINTF("[!] MAIN Task creation failed!\r\n");
 	  while (1)
