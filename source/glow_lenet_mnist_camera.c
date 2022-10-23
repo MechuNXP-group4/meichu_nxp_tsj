@@ -14,6 +14,7 @@
 
 #include "lwip/tcpip.h"
 
+#include "fsl_adapter_gpio.h"
 #include "fsl_common.h"
 
 #include <math.h>
@@ -501,22 +502,40 @@ void run_inference(const uint8_t *image_data, const char* labels[])
 
 /* Meichu Team 4 */
 
-/* mode variable */
-#define ITEM_IN 0
-#define ITEM_OUT 1
-volatile int item_mode = ITEM_IN;
+/* inference and send packet vars */
+TimerHandle_t button_timer;
+volatile int count = 0;
+
+void sendPacket(TimerHandle_t xTimer)
+{
+	if (count == 1)
+	{
+		// do
+		PRINTF("1\r\n");
+	}
+	else
+	{
+		PRINTF("2\r\n");
+	}
+	count = 0;
+}
 
 void BOARD_USER_BUTTON_IRQ_HANDLER(void)
 {
+	PRINTF("here\r\n");
+	//BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+	//if (count == 0) {
+	//	xTimerStartFromISR(button_timer, &xHigherPriorityTaskWoken);
+	}
+	//count++;
 	GPIO_PortClearInterruptFlags(BOARD_USER_BUTTON_GPIO, 1U << BOARD_USER_BUTTON_GPIO_PIN);
-	if (item_mode) item_mode = ITEM_IN;
-	else item_mode = ITEM_OUT;
 	SDK_ISR_EXIT_BARRIER;
 }
 
 void main_task(void * arg)
 {
-  gpio_pin_config_t sw_config = {
+
+   gpio_pin_config_t sw_config = {
 	  kGPIO_DigitalInput,
 	  0,
 	  kGPIO_IntRisingEdge,
@@ -525,6 +544,8 @@ void main_task(void * arg)
   EnableIRQ(BOARD_USER_BUTTON_IRQ);
   GPIO_PinInit(BOARD_USER_BUTTON_GPIO, BOARD_USER_BUTTON_GPIO_PIN, &sw_config);
   GPIO_PortEnableInterrupts(BOARD_USER_BUTTON_GPIO, 1U << BOARD_USER_BUTTON_GPIO_PIN);
+
+  //button_timer = xTimerCreate("button_timer", pdMS_TO_TICKS(500), pdFALSE, NULL, sendPacket);
 
   APP_InitCamera();
   APP_InitDisplay();
@@ -568,7 +589,6 @@ void main_task(void * arg)
 	   /* Run inference on the resized and decolorized data */
 	   run_inference(after_scale->imageData, LABELS);
 	   g_isCamDataExtracted = false;
-	   PRINTF("item_mode: %d\r\n", item_mode);
 	}
   }
 }
